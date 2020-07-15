@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block content %}
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<div id='mydiv'></div>
+    {% for post in posts %}
+        <article class="media content-section">
+            <div class="media-body">
+              <div class="article-metadata">
+                <a class="mr-2" href="#">{{ post.site }}</a>
+              </div>
+              {% for stat in post.stats%}
+                <h6 class="article-title" href="#">{{ stat[0] }}</h6>
+                <p class="article-content">{{ stat[1] }}</p>
+              {% endfor %}
+            </div>
+            
+          </article>
+    {% endfor %}
+    <script>
+      d3.select('#mydiv')
+        // .selectAll('p')
+        .data([1,2,3,4])
+        .enter()
+        .append('p')
+        .text(d => d);
+      
+
+
+    </script>
+{% endblock content %}
+

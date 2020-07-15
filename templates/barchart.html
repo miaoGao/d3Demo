@@ -1,0 +1,134 @@
+{% extends "layout.html" %}
+<html>
+    {% block content %}
+    <body>
+        <h1>Bar Chart using D3.js</h1>
+        <div class="site" id="data" value="{{ posts }}"></div>
+        
+        <!-- <svg class="bar-chart"></svg> -->
+        
+        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/d3@5.6.0/dist/d3.min.js"></script>
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script>
+             // javascript
+            var target_dates = ['2020-06-05','2020-06-06','2020-06-07','2020-06-08','2020-06-09','2020-06-10','2020-06-11']
+            var data = document.getElementById("data").getAttribute("value");
+            data = data.replace(/'/g, '"')
+            var json_obj = JSON.parse(data)
+            //console.log(json_obj[0])
+            // for (i = 0; i < json_obj.length; i++) {
+            //     //console.log(json_obj[i]['site'])
+            //     for (j = 0; j < json_obj[i]['stats'].length; j++) {
+            //         var temp = new Array();
+            //         temp = json_obj[i]['stats'][j];
+            //         console.log( temp[1] )
+            //     }
+            // }
+            for(i = 0; i < json_obj.length; i++) {
+                var news_quantity_temp = new Array();
+                var news_date_temp = new Array();
+                for (j = 0; j < json_obj[i]['stats'].length; j++) {
+                    var temp = new Array();
+                    temp = json_obj[i]['stats'][j];
+                    if (target_dates.includes(temp[0])) {
+                        news_date_temp.push(temp[0])
+                        news_quantity_temp.push(temp[1]);
+                    }
+                }
+                var news_quantity = new Array();
+                var news_date = new Array();
+                target_dates.forEach(target_date => {
+                    news_date.push(target_date)
+                    if (news_date_temp.includes(target_date)) {
+                        var index = news_date_temp.indexOf(target_date)
+                        news_quantity.push(news_quantity_temp[index])
+                    } else {
+                        news_quantity.push(0);
+                    }
+                });
+
+                // console.log(news_quantity); // abcnews的新闻量
+                // console.log(news_date);
+
+                dataset = news_quantity;
+                var svgWidth = 500, svgHeight = 300, barPadding = 5;
+                var barWidth = ((svgWidth - 30) / dataset.length);
+                var id = 'stats-' + i
+                d3.select('body').append('svg').attr('id', id)
+                var svg = d3.select('#stats-' + i)
+                    .attr("viewBox", [0, 0, svgWidth, svgHeight])
+                    .attr("width", svgWidth)
+                    .attr("height", svgHeight);
+                
+                var x = d3.scaleBand()
+                    .domain([0, 1, 2, 3, 4, 5, 6].reverse())
+                    .range([0, svgWidth - 30]);
+
+                var y = d3.scaleLinear()
+                    .domain([0, svgHeight].reverse())
+                    .range([0, svgHeight]);
+
+                var xAxisTranslate = svgHeight - 20;
+
+                xAxis = g => g
+                    .call(d3.axisBottom(x).tickFormat(i => news_date[i]).tickSizeOuter(0))
+
+                yAxis = g => g
+                    .call(d3.axisLeft(y))
+
+                var barChart = svg.selectAll("rect")
+                    .data(dataset)
+                    .enter()
+                    .append("rect")
+                    .attr("fill", "steelblue")
+                    .attr("y", d => svgHeight - d)
+                    .attr("height", d => {return d})
+                    .attr("width", barWidth - barPadding)   
+                    .attr("class", "bar")
+                    .attr("transform", function (d, i) {
+                        var translate = [barWidth * i + 30, -30]; 
+                        return "translate("+ translate +")";
+                    });
+
+                var text = svg.selectAll("text")
+                    .data(dataset)
+                    .enter()
+                    .append("text")
+                    .text(function(d) {
+                        return d;
+                    })
+                    .attr("y", function(d, i) {
+                        return svgHeight - d - 32;
+                    })
+                    .attr("x", function(d, i) {
+                        return barWidth * i + 30;
+                    })
+                    .attr("fill", "#A64C38");
+
+
+                svg.append("g")
+                    .attr("transform", "translate(25, -30)")
+                    .call(yAxis);
+                        
+                var xAxisTranslate = svgHeight - 20;
+                        
+                svg.append("g")
+                    .attr("transform", `translate(25,${svgHeight - 30})`)
+                    .call(xAxis);
+
+                svg.attr("transform", "translate(20, 0)");
+
+                svg.append("text")
+                    .attr("x", (svgWidth / 2))             
+                    .attr("y", 30)
+                    .attr("text-anchor", "middle")  
+                    .style("font-size", "18px")
+                    .text(json_obj[i]['site']);
+                
+            }
+    </script>
+        <!-- <script type="text/javascript" src="{{ url_for('static', filename='data.js') }}"></script> -->
+    </body>
+    {% endblock content %}
+</html>
