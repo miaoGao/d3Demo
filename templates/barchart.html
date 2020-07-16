@@ -8,8 +8,6 @@
         <!-- <svg class="bar-chart"></svg> -->
         
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-        <script src="https://unpkg.com/d3@5.6.0/dist/d3.min.js"></script>
-        <script src="https://d3js.org/d3.v4.min.js"></script>
         <script>
              // javascript
             var target_dates = ['2020-06-05','2020-06-06','2020-06-07','2020-06-08','2020-06-09','2020-06-10','2020-06-11']
@@ -55,7 +53,7 @@
                 var svgWidth = 500, svgHeight = 300, barPadding = 5;
                 var barWidth = ((svgWidth - 30) / dataset.length);
                 var id = 'stats-' + i
-                d3.select('body').append('svg').attr('id', id)
+                d3.select('.col-md-12').append('svg').attr('id', id)
                 var svg = d3.select('#stats-' + i)
                     .attr("viewBox", [0, 0, svgWidth, svgHeight])
                     .attr("width", svgWidth)
@@ -128,7 +126,6 @@
                 
             }
     </script>
-        <!-- <script type="text/javascript" src="{{ url_for('static', filename='data.js') }}"></script> -->
     </body>
     {% endblock content %}
 </html>

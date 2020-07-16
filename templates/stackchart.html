@@ -1,18 +1,13 @@
 {% extends "layout.html" %}
 <html>
 {% block content %}
+<script type="text/javascript" src="{{ url_for('static', filename='legend.js') }}"></script>
 
 <body>
     <h1>Stacked Bar Chart using D3.js</h1>
+    <div class="legend"></div>
+    <svg></svg>
     <div class="site" id="data" value="{{ posts }}"></div>
-
-    <svg class="bar-chart"></svg>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
-        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
-        crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/d3@5.6.0/dist/d3.min.js"></script>
-    <script src="https://d3js.org/d3.v5.min.js"></script>
     <script>
         var target_dates = ['2020-06-05', '2020-06-06', '2020-06-07', '2020-06-08', '2020-06-09', '2020-06-10', '2020-06-11']
         var data = document.getElementById("data").getAttribute("value");
@@ -60,9 +55,9 @@
         // construct data end
 
         // layout variables
-        width = 900
-        height = 600
-        margin = ({ top: 10, right: 10, bottom: 20, left: 40 })
+        width = innerWidth
+        height = 900
+        margin = ({ top: 10, right: 10, bottom: 30, left: 45 })
 
         x = d3.scaleBand()
             .domain(dataset.map(d => d.site))
@@ -78,8 +73,53 @@
             .range(d3.schemeSpectral[series.length])
             .unknown("#ccc")
 
-        
+        // axis
+        xAxis = g => g
+            .style("font", "20px times")
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(x).tickSizeOuter(0))
+            .call(g => g.selectAll(".domain").remove())
 
+        yAxis = g => g
+            .style("font", "20px times")
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(y).ticks(null, "s"))
+            .call(g => g.selectAll(".domain").remove())
+
+        formatValue = x => isNaN(x) ? "N/A" : x.toLocaleString("en")
+
+        // construct chart
+        var svg = d3.select('svg').attr("viewBox", [0, 0, width, height]);
+        svg.append("g")
+            .selectAll("g")
+            .data(series)
+            .join("g")
+            .attr("fill", d => color(d.key))
+            .selectAll("rect")
+            .data(d => d)
+            .join("rect")
+            .attr("x", (d, i) => x(d.data.site))
+            .attr("y", d => y(d[1]))
+            .attr("height", d => y(d[0]) - y(d[1]))
+            .attr("width", x.bandwidth())
+            .append("title")
+            .text(d => `${d.data.site} ${d.key} ${formatValue(d.data[d.key])}`);
+
+        svg.append("g")
+            .call(xAxis);
+
+        svg.append("g")
+            .call(yAxis);
+
+        // TODO: construct legend
+        var l = legend({
+            color: d3.scaleOrdinal(target_dates, d3.schemeSpectral[7]),
+            title: "Date",
+            tickSize: 0
+        })
+
+        d3.select(".legend").node().appendChild(l);
+        
     </script>
 </body>
 {% endblock content %}
