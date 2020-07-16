@@ -1,64 +1,127 @@
 {% extends "layout.html" %}
 <html>
-    {% block content %}
-    <body>
-        <h1>Stacked Bar Chart using D3.js</h1>
-        <div class="site" id="data" value="{{ posts }}"></div>
-        
-        <svg class="bar-chart"></svg>
-        
-        <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-        <script src="https://unpkg.com/d3@5.6.0/dist/d3.min.js"></script>
-        <script src="https://d3js.org/d3.v5.min.js"></script>
-        <script>
-            // javascript
-            var target_dates = ['2020-06-05','2020-06-06','2020-06-07','2020-06-08','2020-06-09','2020-06-10','2020-06-11']
-            var data = document.getElementById("data").getAttribute("value");
-            data = data.replace(/'/g, '"')
-            var json_obj = JSON.parse(data)
-            var dataset = new Array();
-            // --------------------------   data processing     ------------------------------------------
-            for(i = 0; i < json_obj.length; i++) {
-                var news_quantity_temp = [];
-                var news_date_temp = []
-                for (j = 0; j < json_obj[i]['stats'].length; j++) {
-                    var temp = json_obj[i]['stats'][j];
-                    if (target_dates.includes(temp[0])) {
-                        news_date_temp.push(temp[0])
-                        news_quantity_temp.push(temp[1]);
-                    }
-                }
-                // console.log(news_date_temp)
-                // console.log(news_quantity_temp)
+{% block content %}
+<script type="text/javascript" src="{{ url_for('static', filename='legend.js') }}"></script>
 
-                var news_quantity = [];
-                var news_date = [];
-                for (j = 0; j < target_dates.length; j++) {
-                    var current_date = target_dates[j];
-                    news_date.push(current_date)
-                    if (news_date_temp.includes(current_date)) {
-                        var index = news_date_temp.indexOf(current_date)
-                        news_quantity.push(news_quantity_temp[index])
-                    } else {
-                        news_quantity.push(0)
-                    }
+<body>
+    <h1>Stacked Bar Chart using D3.js</h1>
+    <div class="legend"></div>
+    <svg></svg>
+    <div class="site" id="data" value="{{ posts }}"></div>
+    <script>
+        var target_dates = ['2020-06-05', '2020-06-06', '2020-06-07', '2020-06-08', '2020-06-09', '2020-06-10', '2020-06-11']
+        var data = document.getElementById("data").getAttribute("value");
+        data = data.replace(/'/g, '"')
+        var json_obj = JSON.parse(data)
+        var dataset = new Array();
+        // --------------------------   data processing     ------------------------------------------
+        for (i = 0; i < json_obj.length; i++) {
+            var news_quantity_temp = [];
+            var news_date_temp = []
+            for (j = 0; j < json_obj[i]['stats'].length; j++) {
+                var temp = json_obj[i]['stats'][j];
+                if (target_dates.includes(temp[0])) {
+                    news_date_temp.push(temp[0])
+                    news_quantity_temp.push(temp[1]);
                 }
-                // console.log(json_obj[i]['site'])
-                // console.log(news_date)
-                // console.log(news_quantity)
-
-                // construct data object
-                var data = {}
-                data.site = json_obj[i]['site']
-                for (var j = 0; j < news_date.length; j++) {
-                    data[news_date[j]] = news_quantity[j]
-                }
-                dataset.push(data)
             }
+            // console.log(news_date_temp)
+            // console.log(news_quantity_temp)
 
-            console.log(dataset)
-            
+            var news_quantity = [];
+            var news_date = [];
+            for (j = 0; j < target_dates.length; j++) {
+                var current_date = target_dates[j];
+                news_date.push(current_date)
+                if (news_date_temp.includes(current_date)) {
+                    var index = news_date_temp.indexOf(current_date)
+                    news_quantity.push(news_quantity_temp[index])
+                } else {
+                    news_quantity.push(0)
+                }
+            }
+            // construct data object
+            var data = {}
+            data.site = json_obj[i]['site']
+            for (var j = 0; j < news_date.length; j++) {
+                data[news_date[j]] = news_quantity[j]
+            }
+            dataset.push(data)
+        }
+        var columns = ['site', '2020-06-05', '2020-06-06', '2020-06-07', '2020-06-08', '2020-06-09', '2020-06-10', '2020-06-11']
+        var series = d3.stack()
+            .keys(columns.slice(1))(dataset)
+        series.map(d => (d.forEach(v => v.key = d.key)))
+        // construct data end
+
+        // layout variables
+        width = innerWidth
+        height = 900
+        margin = ({ top: 10, right: 10, bottom: 30, left: 45 })
+
+        x = d3.scaleBand()
+            .domain(dataset.map(d => d.site))
+            .range([margin.left, width - margin.right])
+            .padding(0.1)
+
+        y = d3.scaleLinear()
+            .domain([0, d3.max(series, d => d3.max(d, s => s[1]))])     // 0 - 爬取量最大的网站的爬取量
+            .rangeRound([height - margin.bottom, margin.top])
+
+        color = d3.scaleOrdinal()
+            .domain(series.map(d => d.key))
+            .range(d3.schemeSpectral[series.length])
+            .unknown("#ccc")
+
+        // axis
+        xAxis = g => g
+            .style("font", "20px times")
+            .attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(x).tickSizeOuter(0))
+            .call(g => g.selectAll(".domain").remove())
+
+        yAxis = g => g
+            .style("font", "20px times")
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(y).ticks(null, "s"))
+            .call(g => g.selectAll(".domain").remove())
+
+        formatValue = x => isNaN(x) ? "N/A" : x.toLocaleString("en")
+
+        // construct chart
+        var svg = d3.select('svg').attr("viewBox", [0, 0, width, height]);
+        svg.append("g")
+            .selectAll("g")
+            .data(series)
+            .join("g")
+            .attr("fill", d => color(d.key))
+            .selectAll("rect")
+            .data(d => d)
+            .join("rect")
+            .attr("x", (d, i) => x(d.data.site))
+            .attr("y", d => y(d[1]))
+            .attr("height", d => y(d[0]) - y(d[1]))
+            .attr("width", x.bandwidth())
+            .append("title")
+            .text(d => `${d.data.site} ${d.key} ${formatValue(d.data[d.key])}`);
+
+        svg.append("g")
+            .call(xAxis);
+
+        svg.append("g")
+            .call(yAxis);
+
+        // TODO: construct legend
+        var l = legend({
+            color: d3.scaleOrdinal(target_dates, d3.schemeSpectral[7]),
+            title: "Date",
+            tickSize: 0
+        })
+
+        d3.select(".legend").node().appendChild(l);
+        
     </script>
-    </body>
-    {% endblock content %}
+</body>
+{% endblock content %}
+
 </html>
