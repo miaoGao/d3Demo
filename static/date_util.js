@@ -5,6 +5,7 @@
  * @param {Date} endDate 
  */
 var getDates = function (startDate, endDate) {
+
     var dates = [],
         currentDate = startDate,
         addDays = function (days) {

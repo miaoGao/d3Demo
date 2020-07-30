@@ -33,6 +33,10 @@ def barchart():
 def stackchart():
     return render_template("stackchart.html", posts = jl_data)
 
+@app.route('/date')
+def dateSelector():
+    return render_template("dateSelector.html")
+
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
 
